@@ -1,0 +1,47 @@
+<html>
+<head>
+  <title>Simple StatsD Counters</title>
+  <script type="text/javascript" src="jquery-1.7.2.min.js"></script>
+  <script type="text/javascript" src="jquery.dynatable.js"></script>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <link rel="stylesheet" type="text/css" href="jquery.dynatable.css">
+</head>
+
+<body>
+  <h1>Statsd Viewer</h1>
+  <h2>Counters</h2>
+  <table class="table table-striped" id="remote">
+    <thead>
+      <th>Counter Name</th>
+      <th>Value</th>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <script type="text/javascript">
+    $('#remote').dynatable({
+      dataset: {
+        records: []
+      }
+    });
+    var t = $('#remote').data('dynatable');
+
+    function reload() {
+      console.log('reload');
+      $.ajax({
+        url: '/counters',
+        success: function(data){
+          // t.records.updateFromJson({
+          //   records: data
+          // });
+          t.settings.dataset.originalRecords = data;
+          t.process();
+        }
+      });
+    }
+
+    reload()
+    setInterval(reload, 1000);
+  </script>
+</body>
+</html>
