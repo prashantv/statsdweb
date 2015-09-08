@@ -20,9 +20,16 @@
   </table>
   <script type="text/javascript">
     $('#remote').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        search: true,
+        recordCount: true,
+      },
       dataset: {
         records: []
-      }
+      },
+      inputs: { queryEvent: 'keyup' }
     });
     var t = $('#remote').data('dynatable');
 
