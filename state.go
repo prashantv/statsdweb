@@ -5,6 +5,8 @@ import (
 	"sync"
 )
 
+const maxTimerSamples = 1000
+
 type metricsState struct {
 	sync.RWMutex
 
@@ -34,6 +36,16 @@ func (s *metricsState) RecordTimer(name string, value int64) {
 
 	s.Timers[name] = append(s.Timers[name], value)
 	sort.Sort(Int64Slice(s.Timers[name]))
+
+	// If we have too many samples, drop half of them.
+	timerVals := s.Timers[name]
+	if numSamples := len(timerVals); numSamples > maxTimerSamples {
+		var newTimers []int64
+		for i := 0; i < numSamples; i += 2 {
+			newTimers = append(newTimers, timerVals[i])
+		}
+		s.Timers[name] = newTimers
+	}
 }
 
 // Int64Slice is used to implement Sort for []int64
