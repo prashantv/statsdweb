@@ -4,13 +4,12 @@
   <script type="text/javascript" src="jquery-1.7.2.min.js"></script>
   <script type="text/javascript" src="jquery.dynatable.js"></script>
   <link rel="stylesheet" type="text/css" href="bootstrap.min.css">
-  <link rel="stylesheet" type="text/css" href="jquery.dynatable.css">
 </head>
 
 <body>
   <h1>Statsd Viewer</h1>
   <h2>Counters</h2>
-  <table class="table table-striped" id="remote">
+  <table class="table table-striped" id="counters">
     <thead>
       <th>Counter Name</th>
       <th>Value</th>
@@ -19,7 +18,7 @@
     </tbody>
   </table>
   <script type="text/javascript">
-    $('#remote').dynatable({
+    var countersTable = $('#counters').dynatable({
       features: {
         paginate: false,
         sort: true,
@@ -30,9 +29,13 @@
       dataset: {
         records: []
       },
-      inputs: { queryEvent: 'keyup' }
-    });
-    var t = $('#remote').data('dynatable');
+      inputs: {
+        queryEvent: 'keyup'
+      },
+      params: {
+        dynatable: 'counters'
+      }
+    }).data('dynatable');
 
     function reload() {
       console.log('reload');
@@ -42,8 +45,8 @@
           // t.records.updateFromJson({
           //   records: data
           // });
-          t.settings.dataset.originalRecords = data;
-          t.process();
+          countersTable.settings.dataset.originalRecords = data;
+          countersTable.process();
         }
       });
     }
