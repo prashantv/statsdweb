@@ -5,7 +5,6 @@ import (
 	"flag"
 	"log"
 	"net/http"
-	"sort"
 )
 
 var (
@@ -16,7 +15,7 @@ var (
 
 func init() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-	http.HandleFunc("/counters", countersHandler)
+	http.HandleFunc("/state", stateHandler)
 }
 
 func main() {
@@ -28,28 +27,11 @@ func main() {
 	log.Fatalf("http.ListenAndServe failed: %v", http.ListenAndServe(":9090", nil))
 }
 
-type record struct {
-	CounterName string `json:"counterName"`
-	Value       int64  `json:"value"`
-}
-
-type recordByName []record
-
-func (s recordByName) Len() int           { return len(s) }
-func (s recordByName) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s recordByName) Less(i, j int) bool { return s[i].CounterName < s[j].CounterName }
-
-func countersHandler(w http.ResponseWriter, r *http.Request) {
+func stateHandler(w http.ResponseWriter, r *http.Request) {
 	state.RLock()
 	state.RUnlock()
 
-	var records []record
-	for k, v := range state.Counters {
-		records = append(records, record{k, v})
-	}
-	sort.Sort(recordByName(records))
-
 	w.Header().Set("content-type", "application/json")
 	encoder := json.NewEncoder(w)
-	encoder.Encode(records)
+	encoder.Encode(state)
 }

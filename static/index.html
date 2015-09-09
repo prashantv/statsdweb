@@ -11,44 +11,130 @@
   <h2>Counters</h2>
   <table class="table table-striped" id="counters">
     <thead>
-      <th>Counter Name</th>
+      <th>Name</th>
       <th>Value</th>
     </thead>
     <tbody>
     </tbody>
   </table>
+  <h2>Gauges</h2>
+  <table class="table table-striped" id="gauges">
+    <thead>
+      <th>Name</th>
+      <th>Value</th>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+  <h2>Timers</h2>
+  <table class="table table-striped" id="timers">
+    <thead>
+      <th>Name</th>
+      <th>Samples</th>
+      <th>Average</th>
+      <th>Median</th>
+      <th>P95</th>
+      <th>P99</th>
+    </thead>
+    <tbody>
+    </tbody>
+  </table>
+
   <script type="text/javascript">
-    var countersTable = $('#counters').dynatable({
-      features: {
-        paginate: false,
-        sort: true,
-        search: true,
-        recordCount: true,
-        pushState: true
-      },
-      dataset: {
-        records: []
-      },
-      inputs: {
-        queryEvent: 'keyup'
-      },
-      params: {
-        dynatable: 'counters'
-      }
-    }).data('dynatable');
+    function makeTable(tableId) {
+      return $('#' + tableId).dynatable({
+        features: {
+          paginate: false,
+          sort: true,
+          search: true,
+          recordCount: true,
+          pushState: true
+        },
+        dataset: {
+          records: [],
+          sorts: { 'name': 1 }
+        },
+        inputs: {
+          queryEvent: 'keyup'
+        },
+        params: {
+          dynatable: tableId
+        }
+      }).data('dynatable');
+    }
+
+    var countersTable = makeTable('counters');
+    var gaugesTable = makeTable('gauges');
+    var timersTable = makeTable('timers');
 
     function reload() {
       console.log('reload');
       $.ajax({
-        url: '/counters',
+        url: '/state',
         success: function(data){
-          // t.records.updateFromJson({
-          //   records: data
-          // });
-          countersTable.settings.dataset.originalRecords = data;
+          var counters =
+          countersTable.settings.dataset.originalRecords =
+            recordsForCounters(data.counters);;
           countersTable.process();
+
+          gaugesTable.settings.dataset.originalRecords =
+            recordsForCounters(data.gauges);;
+          gaugesTable.process();
+
+          timersTable.settings.dataset.originalRecords =
+            recordsForTimers(data.timers);;
+          timersTable.process();
         }
       });
+    }
+
+    function recordsForCounters(valuesDict) {
+      var records = [];
+      for (var k in valuesDict) {
+        records[records.length] = {
+          name: k,
+          value: valuesDict[k]
+        };
+      }
+      return records;
+    }
+
+    function getPercentile(list, percentile) {
+      if (list.length == 0) {
+        return '';
+      }
+
+      var index = Math.floor(list.length * percentile);
+      return list[index];
+    }
+
+    function average(list) {
+      if (list.length == 0) {
+        return '';
+      }
+
+      var sum = 0;
+      for(var i = 0; i < list.length; i++) {
+        sum += list[i];
+      }
+      return Math.round(sum/list.length, 2);
+    }
+
+    function recordsForTimers(valuesDict) {
+      var records = [];
+      for (var k in valuesDict) {
+        list = valuesDict[k];
+        records[records.length] = {
+          name: k,
+          average: average(list),
+          samples: list.length,
+          median: getPercentile(list, 0.5),
+          p95: getPercentile(list, 0.95),
+          p99: getPercentile(list, 0.99),
+          value: valuesDict[k]
+        };
+      }
+      return records;
     }
 
     reload()
