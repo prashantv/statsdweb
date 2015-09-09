@@ -20,3 +20,11 @@ func (s *metricsState) IncCounter(name string, value int64) {
 
 	s.Counters[name] += value
 }
+
+func (s *metricsState) RecordTimer(name string, value int64) {
+
+}
+
+func (s *metricsState) UpdateGauge(name string, value int64) {
+
+}

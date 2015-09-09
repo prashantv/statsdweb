@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -25,20 +26,31 @@ func startStatsd(listenAddr string) error {
 	return nil
 }
 
+func handleMetric(metricType, metric string, value int64) {
+	switch metricType {
+	case "c":
+		state.IncCounter(metric, value)
+	case "ms":
+		state.RecordTimer(metric, value)
+	case "g":
+		state.UpdateGauge(metric, value)
+	}
+}
+
 func processLine(line string) error {
 	line = strings.TrimSpace(line)
 	parts := strings.Split(line, "|")
-	if parts[1] != "c" {
-		return fmt.Errorf("ignoring type: %v", parts[1])
+	if len(parts) < 2 {
+		return errors.New("metric is missing type")
 	}
 	parts2 := strings.Split(parts[0], ":")
 	metric := parts2[0]
-	count, err := strconv.Atoi(parts2[1])
+	value, err := strconv.Atoi(parts2[1])
 	if err != nil {
 		return err
 	}
 
-	state.IncCounter(metric, int64(count))
+	handleMetric(parts[1], metric, int64(value))
 	return nil
 }
 
